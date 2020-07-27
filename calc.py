@@ -22,6 +22,7 @@ def features(pts):
     res['eyeR'] = dist(pts[11], pts[12])
     res['lipU'] = dist(pts[13], pts[15])
     res['lipL'] = dist(pts[14], pts[16])
+    res['lipH'] = dist(pts[13], pts[16])
     res['interocularD'] = dist(pts[10], pts[11])
     return res
 
@@ -38,5 +39,6 @@ def errors(pts):
     exp = feats['lipU'] * GR
     err.append((exp - feats['lipL']) / exp)
     exp = feats['interocularD'] * GR
-    err.append((2*exp - feats['eyeL'] - feats['eyeR']) / exp)
+    err.append((2 * exp - feats['eyeL'] - feats['eyeR']) / exp)
+    err.append((exp - feats['lipH']) / exp)
     return 100 - sum([abs(i) for i in err])
