@@ -2,6 +2,8 @@ from __future__ import division
 import dlib
 import cv2
 import numpy as np
+import calc
+
 
 def resize(img, width=None, height=None, interpolation=cv2.INTER_AREA):
     global ratio
@@ -20,9 +22,10 @@ def resize(img, width=None, height=None, interpolation=cv2.INTER_AREA):
         resized = cv2.resize(img, (height, width), interpolation)
         return resized
 
+
 def shape_to_np(shape, dtype="int"):
     coords = np.zeros((81, 2), dtype=dtype)
-    
+
     for i in range(0, 81):
         coords[i] = (shape.part(i).x, shape.part(i).y)
 
@@ -37,49 +40,28 @@ def landmark():
     predictor = dlib.shape_predictor(path)
 
     while True:
-
         ret, frame = cap.read()
-        if ret == False:
+        if not ret:
             print('Failed to capture frame from camera. Check camera index in cv2.VideoCapture(0) \n')
-            break
-
+            return
+        frame = cv2.flip(frame, 1)
         grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         frame_resized = resize(grey, width=120)
         detects = detector(frame_resized, 1)
-        
-        if len(detects) > 0:
-            for k, d in enumerate(detects):
-                shape = predictor(frame_resized, d)
-                shape = shape_to_np(shape)
-                new=[]
-                new.append(shape[0])
-                new.append(shape[7])
-                new.append(shape[14])
-                new.append(shape[16])
-                new.append(shape[20])
-                new.append(shape[21])
-                new.append(shape[25])
-                new.append(shape[26])
-                new.append(shape[34])
-                new.append(shape[35])
-                new.append(shape[38])
-                new.append(shape[41])
-                new.append(shape[44])
-                new.append(shape[50])
-                new.append(shape[56])
-                new.append(shape[61])
-                new.append(shape[65])
-                new.append(shape[70])
 
-                for (x, y) in shape:
-                    cv2.circle(frame, (int(x/ratio), int(y/ratio)), 3, (255, 255, 255), -1)
+        for k, d in enumerate(detects):
+            shape = predictor(frame_resized, d)
+            shape = shape_to_np(shape)
+            reqd_pts = [1, 8, 15, 17, 21, 22, 26, 27, 33, 36, 39, 42, 45, 51, 57, 62, 66, 71]
+            new = [shape[i] for i in reqd_pts]
+            for i, (x, y) in enumerate(new):
+                cv2.circle(frame, (int(x / ratio), int(y / ratio)), 3, (255, 255, 255), -1)
+            cv2.putText(frame, str(calc.errors(new)), (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 0), 1, cv2.LINE_AA)
         cv2.imshow("image", frame)
-
         if cv2.waitKey(1) & 0xFF == ord('q'):
             cv2.destroyAllWindows()
             cap.release()
             break
-    return new
 
-coordinates= landmark()
-print(coordinates)
+
+landmark()
